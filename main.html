@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Missle</title>
+
+<style>
+body {
+    margin: 0;
+    background: #050505;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: monospace;
+    overflow: hidden;
+    scrollbar-width: none;
+}
+
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+#game-container {
+    position: relative;
+
+}
+
+canvas {
+    background: #000;
+    border: 2px solid #ff0033;
+    cursor: crosshair;
+    
+}
+
+.ui-element {
+    position: absolute;
+    color: white;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+#score-board { top: 10px; left: 10px; }
+#ammo-board { top: 10px; right: 10px; }
+
+#game-over-screen {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.9);
+    border: 2px solid #ff0033;
+    padding: 20px;
+    text-align: center;
+}
+
+.country {
+   	width: 100%;
+   	height: 100%;
+   	position: relative;
+   	background-image: url("art/su.svg");
+}
+
+.cimg {
+		
+	background-image: url('art/su.svg');
+    background-size: cover;       /* Scales the image to fill the canvas */
+    background-position: -5px -110px;   /* Centers the image */
+    background-repeat: no-repeat;  /* Prevents tiling */
+    // border: 2px solid #FFF;
+}
+
+
+.terminal {
+	width: 400px;
+	height: 600px;
+	border: 2px solid #FF;
+	background-image: url('crt.png');
+    background-size: contain;       
+    background-position: 0px 0px;   
+    background-repeat: no-repeat;
+    margin-right: 10px;  
+    
+}
+
+.terminal-text {
+	padding-left: 55px;
+    padding-top: 75px;
+    color: #00ff00;
+	font-size: 8px;
+	font: "monospace";
+} 
+
+/* Reset and basic terminal styling */
+.terminal-body {
+	//background-color: #0a0a0a;
+	color: #00ff66;
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 8px;
+	margin: 0;
+	padding: 0px;
+	box-sizing: border-box;
+	height: 150px;
+	width: 240px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden; /* Prevents browser scrollbars */
+	scrollbar-width: none;
+	
+}
+
+/* Container that holds all output and the active line */
+#terminal-container {
+	flex: 1;
+	overflow-y: auto; /* Standard scrolling inside the terminal */
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	&::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Styling for completed lines of text */
+.line {
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	margin-bottom: 4px;
+	min-height: 10px;
+}
+
+/* The active typing area */
+.input-line {
+	display: flex;
+	align-items: center;
+}
+
+.prompt {
+	margin-right: 8px;
+	user-select: none;
+}
+
+/* Hidden textarea used to capture user input cleanly */
+#hidden-input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Visual representation of what you are typing */
+#visual-text {
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+/* Custom blinking cursor */
+.cursor {
+	display: inline-block;
+	background-color: #00ff66;
+	width: 5px;
+	height: 8px;
+	animation: blink 1s step-end infinite;
+	margin-left: 2px;
+}
+
+@keyframes blink {
+	from, to { background-color: transparent }
+	50% { background-color: #00ff66; }
+}
+
+
+</style>
+</head>
+
+<body>
+<div class="terminal">
+	<div class="terminal-text">
+		<div class="terminal-body no-scrollbar">
+			<div id="terminal-container">
+				<div id="history"></div>
+				<div class="input-line">
+					<span class="prompt">&gt;</span>
+					<span id="visual-text"></span><span class="cursor"></span>
+				</div>
+			</div>
+			<textarea id="hidden-input" autofocus></textarea>
+		</div>
+	</div>
+</div>
+<div id="game-container">
+    <div id="score-board" class="ui-element"></div>
+    <div id="ammo-board" class="ui-element"></div>
+
+    <canvas id="gameCanvas" class="cimg" width="800" height="600">
+		<div class="country">
+			
+		</div>
+    </canvas>
+
+    <div id="game-over-screen">
+        <h1>GAME OVER</h1>
+        <p id="final-score"></p>
+        <button id="restartBtn">Restart</button>
+    </div>
+</div>
+<button onclick="playWav(0)">Play</button>
+<button onclick="playWav(1)">Play</button>
+<button onclick="playWav(2)">Play</button>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const scoreBoard = document.getElementById("score-board");
+const ammoBoard = document.getElementById("ammo-board");
+const gameOverScreen = document.getElementById("game-over-screen");
+const restartBtn = document.getElementById("restartBtn");
+const finalScore = document.getElementById("final-score");
+
+let score = 0;
+let stage = 1;
+let ammo = 12;
+let gameOver = false;
+
+/* ---------------- OFFSCREEN BLOOM ---------------- */
+
+const glowCanvas = document.createElement("canvas");
+const glowCtx = glowCanvas.getContext("2d");
+glowCanvas.width = canvas.width;
+glowCanvas.height = canvas.height;
+
+/* ---------------- FX ---------------- */
+
+let screenFlash = 0;
+let particles = [];
+let trailParticles = [];
+let explosions = [];
+let enemyMissiles = [];
+let playerMissiles = [];
+let cities = [];
+let battery;
+
+/* ---------------- UI ---------------- */
+
+function updateUI() {
+    scoreBoard.innerHTML = `SCORE: ${score}<br>STAGE: ${stage}`;
+    ammoBoard.innerHTML = `AMMO: ${ammo}`;
+}
+
+/* ---------------- TRAILS ---------------- */
+
+class TrailParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 0.6;
+        this.vy = (Math.random() - 0.5) * 0.6;
+        this.life = 25 + Math.random() * 15;
+        this.maxLife = this.life;
+        this.color = color;
+        this.size = 2 + Math.random() * 2;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+    }
+
+    draw(g = ctx) {
+        const a = this.life / this.maxLife;
+        g.fillStyle = `rgba(${this.color}, ${a})`;
+        g.fillRect(this.x, this.y, this.size, this.size);
+    }
+}
+
+function spawnTrail(x, y, color) {
+    trailParticles.push(new TrailParticle(x, y, color));
+}
+
+/* ---------------- PARTICLES ---------------- */
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        const a = Math.random() * Math.PI * 2;
+        const s = Math.random() * 0.3 + 1; // 4+1 how far particles fly
+        this.vx = Math.cos(a) * s;
+        this.vy = Math.sin(a) * s;
+        this.life = 60 + Math.random() * 40; //60 + Math.random() * 40;
+        this.color = color;
+    }
+
+    update() {
+        this.vx *= 0.96; //0.96
+        this.vy *= 0.96; //0.96
+        //this.vy += 0.05; // gravity for particles
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+        
+    }
+
+    draw(g = ctx) {
+        g.fillStyle = this.color;
+        g.fillRect(this.x, this.y, 2, 2);
+    }
+}
+
+function spawnParticles(x, y, color) {
+    for (let i = 0; i < 25; i++) {
+        particles.push(new Particle(x, y, color));
+    }
+}
+
+/* ---------------- EXPLOSIONS ---------------- */
+
+class Explosion {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        // controls size of explosion
+        this.r = 1; //1
+        this.max = 15; //35
+        this.alive = true;
+        this.flash = true;
+        playWav(0);
+    }
+
+    update() {
+        if (this.flash) {
+            screenFlash = 1;
+            this.flash = false;
+        }
+
+        this.r += 2;
+        if (this.r > this.max) this.alive = false;
+
+        if (this.color === "#ffffff") {
+            for (let e of enemyMissiles) {
+                const d = Math.hypot(e.x - this.x, e.y - this.y);
+                if (d < this.r) {
+                    e.alive = false;
+                    score += 100;
+                }
+            }
+        }
+
+        spawnParticles(this.x, this.y, this.color);
+    }
+
+    draw(g = ctx) {
+        g.strokeStyle = this.color;
+        g.beginPath();
+        g.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        g.stroke();
+    }
+}
+
+/* ---------------- MISSILES ---------------- */
+
+class EnemyMissile {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = 0;
+
+        this.tx = Math.random() * canvas.width;
+        this.ty = canvas.height - 20;
+
+        this.vx = (this.tx - this.x) * 0.01;
+        this.vy = 2;
+        this.gravity = 0.0; //0.05
+        this.alive = true;
+    }
+
+    update() {
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        spawnTrail(this.x, this.y, "255,0,0");
+
+        if (this.y >= this.ty) {
+            this.alive = false;
+            explosions.push(new Explosion(this.x, this.y, "#ff0033"));
+        }
+    }
+
+    draw(g = ctx) {
+        g.strokeStyle = "red";
+        g.beginPath();
+        g.moveTo(this.x, this.y);
+        g.lineTo(this.x - this.vx * 3, this.y - this.vy * 3);
+        g.stroke();
+    }
+}
+
+class PlayerMissile {
+    constructor(tx, ty) {
+        this.x = battery.x;
+        this.y = battery.y;
+		this.misslespeed = 1.5;
+		
+        const dx = tx - this.x;
+        const dy = ty - this.y;
+        const d = Math.hypot(dx, dy);
+
+        this.vx = (dx / d) * this.misslespeed; 
+        this.vy = (dy / d) * this.misslespeed;
+
+        this.tx = tx;
+        this.ty = ty;
+
+        this.gravity = 0.00; // 0.08
+        this.alive = true;
+    }
+
+    update() {
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        spawnTrail(this.x, this.y, "255,255,255");
+
+        const d = Math.hypot(this.tx - this.x, this.ty - this.y);
+        if (d < 12) {
+            this.alive = false;
+            explosions.push(new Explosion(this.tx, this.ty, "#ffffff"));
+        }
+    }
+
+    draw(g = ctx) {
+        g.strokeStyle = "#fff";
+        g.beginPath();
+        g.moveTo(this.x, this.y);
+        g.lineTo(this.x - this.vx * 2, this.y - this.vy * 2);
+        g.stroke();
+    }
+}
+
+class City {
+	constructor(x, y, color) {
+		this.centerX=x;
+		this.centerY=y;
+		this.size = 3;
+		this.alive = true;
+	}
+	
+	update(){
+		this.draw();
+		
+	}
+	
+	draw() {
+		//console.log("Draw City");
+		if (!this.alive) return;
+		ctx.save();
+		ctx.beginPath();  ctx.moveTo(this.centerX, this.centerY - this.size);   
+		ctx.lineTo(this.centerX + this.size, this.centerY);   
+		ctx.lineTo(this.centerX, this.centerY + this.size);   
+		ctx.lineTo(this.centerX - this.size, this.centerY);  
+		ctx.closePath();                                                                                         
+																													
+		// Styling and drawing the shape                                                                             
+		ctx.strokeStyle = color;   // The color of the outline                                                  
+		ctx.lineWidth = 1;         // Thickness of the line                                                      
+		ctx.stroke();             // Draws the outline                                                           
+																													
+		// Optional: Fill the diamond with a semi-transparent color                                                  
+		ctx.fillStyle = 'rgba(0, 120, 0, 0.2)';                                                                
+		ctx.fill();       
+		ctx.restore();
+	}
+}
+
+
+
+/* ---------------- BLOOM SYSTEM ---------------- */
+
+function drawBloom(drawFn) {
+    glowCtx.clearRect(0, 0, glowCanvas.width, glowCanvas.height);
+
+    drawFn(glowCtx);
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.filter = "blur(7px)"; // 10px
+    ctx.globalAlpha = 1; //0.85
+    ctx.drawImage(glowCanvas, 0, 0);
+	
+	if(1){
+		ctx.filter = "none";
+		ctx.globalAlpha = 1;
+		ctx.drawImage(glowCanvas, 0, 0);
+    }
+    
+    ctx.restore();
+}
+
+/* ---------------- GAME ---------------- */
+
+function loop() {
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	// flash when explosion occurs
+	if(1){
+		if (screenFlash > 0) {
+			ctx.fillStyle = `rgba(255,255,255,${screenFlash})`;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			screenFlash *= 0.85;
+		}
+	}
+
+	// filter out entities that do not need to draw
+    enemyMissiles = enemyMissiles.filter(m => m.alive);
+    playerMissiles = playerMissiles.filter(m => m.alive);
+    explosions = explosions.filter(e => e.alive);
+    particles = particles.filter(p => p.life > 0);
+    trailParticles = trailParticles.filter(p => p.life > 0);
+
+	// update entity 
+    enemyMissiles.forEach(m => m.update());
+    playerMissiles.forEach(m => m.update());
+    explosions.forEach(e => e.update());
+	cities.forEach(c => c.update());
+    particles.forEach(p => p.update());
+    trailParticles.forEach(p => p.update());
+
+	// draw enities with bloom system applied
+    drawBloom((g) => {
+        explosions.forEach(e => e.draw(g));
+        particles.forEach(p => p.draw(g));
+        trailParticles.forEach(p => p.draw(g));
+
+        enemyMissiles.forEach(m => m.draw(g));
+        playerMissiles.forEach(m => m.draw(g));
+    });
+	
+    requestAnimationFrame(loop);
+}
+
+/* ---------------- INPUT ---------------- */
+
+canvas.addEventListener("click", (e) => {
+    if (gameOver) return;
+
+    const r = canvas.getBoundingClientRect();
+    playerMissiles.push(
+        new PlayerMissile(e.clientX - r.left, e.clientY - r.top)
+    );
+});
+
+/* ---------------- INIT ---------------- */
+
+function reset() {
+    score = 0;
+    stage = 1;
+    ammo = 12;
+
+    enemyMissiles = [];
+    playerMissiles = [];
+    explosions = [];
+    particles = [];
+    trailParticles = [];
+	
+	cities = [];
+	for(i=0;i<5;i++){
+		X=Math.random() * canvas.width;
+		Y=Math.random() * canvas.height;
+		color='rgba(255, 255, 255, 1.0)';
+		cities.push(
+			new City(X, Y, color)
+		);
+	}
+	
+    battery = { x: canvas.width / 2, y: canvas.height - 25 };
+
+    updateUI();
+}
+initAudio();
+reset();
+loop();
+
+});
+
+</script>
+<script>
+	const hiddenInput = document.getElementById('hidden-input');
+	const visualText = document.getElementById('visual-text');
+	const history = document.getElementById('history');
+	const container = document.getElementById('terminal-container');
+
+	// Keep the hidden textarea focused so the user can always type
+	document.addEventListener('click', () => {
+		hiddenInput.focus();
+	});
+
+	// Mirror the hidden input text to our visual element
+	hiddenInput.addEventListener('input', () => {
+		visualText.textContent = hiddenInput.value;
+		scrollToBottom();
+	});
+
+	// Handle special keys (Enter)
+	hiddenInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') {
+			e.preventDefault(); // Stop default newline in textarea
+
+			const typedText = hiddenInput.value;
+
+			// Create a permanent line in history
+			const newLine = document.createElement('div');
+			newLine.className = 'line';
+			// Include the prompt symbol in history
+			newLine.textContent = '> ' + typedText;
+			history.appendChild(newLine);
+						
+			// Reset the input for the next line
+			hiddenInput.value = '';
+			visualText.textContent = '';
+
+			//check for command
+			processCommand(typedText);
+
+			// Ensure the terminal scrolls up if it hits the bottom
+			scrollToBottom();
+		}
+	});
+
+	// Helper function to handle auto-scrolling
+	function scrollToBottom() {
+		container.scrollTop = container.scrollHeight;
+	}
+	
+	
+
+	// Example function to handle the grabbed text
+	function processCommand(command) {
+		const trimmedCommand = command.trim().toLowerCase();
+		
+		if (trimmedCommand === 'help') {
+			displayResponse('Available commands: help, clear, hello');
+		} else if (trimmedCommand === 'clear') {
+			document.getElementById('history').innerHTML = '';
+		} else if (trimmedCommand === 'hello'){
+			displayResponse("Shall we play a game?");
+		}
+	}
+	
+	function displayResponse(response){
+		//visualText.textContent = "Shall we play a game?";
+		hiddenInput.value = response;
+		const typedText = hiddenInput.value;
+
+		// Create a permanent line in history
+		const newLine = document.createElement('div');
+		newLine.className = 'line';
+		// Include the prompt symbol in history
+		newLine.textContent = '> ' + typedText;
+		history.appendChild(newLine);
+					
+		// Reset the input for the next line
+		hiddenInput.value = '';
+		visualText.textContent = '';
+	}
+	
+	processCommand("help");
+	
+</script>
+
+<script>
+// Audio 
+
+function initAudio(){
+
+}
+
+function playWav(id){
+	switch(id){
+		
+		case 0:
+			playBoom();
+			break;
+		case 1:
+			playHigh();
+			break;
+		case 2:
+			playMid();
+			break;
+	}
+	
+	
+}
+function playHigh(){
+	const audio = new Audio('snd/high.wav');
+	audio.volume = .5;
+	audio.play();
+}
+
+function playBoom(){
+	const audio = new Audio('snd/boom.wav');
+	audio.volume = 1;
+	audio.play();
+}
+
+function playMid(){
+	const audio = new Audio('snd/mid.wav');
+	audio.volume = .5;
+	audio.play();
+}
+
+</script>
+
+</body>
+</html>

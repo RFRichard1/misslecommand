@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Terminal</title>
+    <style>
+        /* Reset and basic terminal styling */
+        .terminal-body {
+            background-color: #0a0a0a;
+            color: #00ff66;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevents browser scrollbars */
+        }
+
+        /* Container that holds all output and the active line */
+        #terminal-container {
+            flex: 1;
+            overflow-y: auto; /* Standard scrolling inside the terminal */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* Styling for completed lines of text */
+        .line {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-bottom: 4px;
+            min-height: 20px;
+        }
+
+        /* The active typing area */
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+
+        .prompt {
+            margin-right: 8px;
+            user-select: none;
+        }
+
+        /* Hidden textarea used to capture user input cleanly */
+        #hidden-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Visual representation of what you are typing */
+        #visual-text {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Custom blinking cursor */
+        .cursor {
+            display: inline-block;
+            background-color: #00ff66;
+            width: 10px;
+            height: 18px;
+            animation: blink 1s step-end infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            from, to { background-color: transparent }
+            50% { background-color: #00ff66; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="terminal-container">
+        <div id="history"></div>
+        <div class="input-line">
+            <span class="prompt">&gt;</span>
+            <span id="visual-text"></span><span class="cursor"></span>
+        </div>
+    </div>
+
+    <textarea id="hidden-input" autofocus></textarea>
+
+    <script>
+        const hiddenInput = document.getElementById('hidden-input');
+        const visualText = document.getElementById('visual-text');
+        const history = document.getElementById('history');
+        const container = document.getElementById('terminal-container');
+
+        // Keep the hidden textarea focused so the user can always type
+        document.addEventListener('click', () => {
+            hiddenInput.focus();
+        });
+
+        // Mirror the hidden input text to our visual element
+        hiddenInput.addEventListener('input', () => {
+            visualText.textContent = hiddenInput.value;
+            scrollToBottom();
+        });
+
+        // Handle special keys (Enter)
+        hiddenInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Stop default newline in textarea
+
+                const typedText = hiddenInput.value;
+
+                // Create a permanent line in history
+                const newLine = document.createElement('div');
+                newLine.className = 'line';
+                // Include the prompt symbol in history
+                newLine.textContent = '> ' + typedText;
+                history.appendChild(newLine);
+
+                // Reset the input for the next line
+                hiddenInput.value = '';
+                visualText.textContent = '';
+
+                // Ensure the terminal scrolls up if it hits the bottom
+                scrollToBottom();
+            }
+        });
+
+        // Helper function to handle auto-scrolling
+        function scrollToBottom() {
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+</html>
