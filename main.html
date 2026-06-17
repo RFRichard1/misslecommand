@@ -233,6 +233,10 @@ button:hover {
 	opacity: 0;
 }
 
+#mycontrols {
+	opacity: 0;
+}
+
 </style>
 </head>
 
@@ -253,7 +257,7 @@ button:hover {
 	<div id="ttt-container" class="ttt-container">
 		<div id="status" hidden>Player X's Turn</div>
 		<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
-		<button class="ttt-button" onclick="resetGame()">Reset Game</button>
+		<!--<button class="ttt-button" onclick="resetGame()">Reset Game</button>-->
     </div>
 </div>
 
@@ -273,9 +277,11 @@ button:hover {
         <button id="restartBtn">Restart</button>
     </div>
 </div>
-<button onclick="fade(document.getElementById('ticTacToe'), 1000);">fade</button>
-<button onclick="fadeTTTGame();">Play</button>
-<button onclick="fadeMap();">fade</button>
+<div id="mycontrols">
+	<button onclick="resetGame()">Reset</button>
+	<button onclick="fadeTTTGame();">Fade G</button>
+	<button onclick="fadeMap();">Fade M</button>
+</div>
 </body>
 
 <script> // Missile Game
@@ -715,27 +721,77 @@ loop();
 	// Helper function to handle auto-scrolling
 	function scrollToBottom() {
 		container.scrollTop = container.scrollHeight;
+		//container.scrollTo({ top: textView.scrollHeight, behavior: "smooth"});
+		
 	}
 	
+		const textView = document.getElementById("myTextView");
+	textView.scrollTo({
+	  top: textView.scrollHeight,
+	  behavior: "smooth"
+});
+	
+	// command states and events
+	// hello-> 
+	// 		game playing 
+	//			yes
+	//				say game playing
+	//			no
+	//				ask for game
+					
 	
 
 	// Example function to handle the grabbed text
 	function processCommand(command) {
 		const trimmedCommand = command.trim().toLowerCase();
 		
-		if (trimmedCommand === 'help') {
-			displayResponse('Available commands: help, clear, hello');
-		} else if (trimmedCommand === 'clear') {
-			document.getElementById('history').innerHTML = '';
-			increment.num=0;
-		} else if (trimmedCommand === 'hello'){
-			displayResponse("Shall we play a game?");
+		
+		switch(trimmedCommand){
+			case 'help':
+				displayResponse('Available commands: help, clear, hello');
+				break;
+			
+			case 'clear':
+				document.getElementById('history').innerHTML = '';
+				increment.num=0;
+				break;
+			
+			case 'hello':
+				displayResponse("Shall we play a game?");
+				break;
+			
+			case 'reset':
+				resetGame();
+				break;
+			case 'c':
+				fadeMyControls();
+				break;
+			case ('goodbye'):
+				fadeMyControls();
+				fadeTTTGame();
+				fadeMap();
+				break;
+			case ('bye'):
+				fadeMyControls();
+				fadeTTTGame();
+				fadeMap();
+				resetGame();
+				break;
+			case ('yes'):
+				fadeMyControls();
+				fadeTTTGame();
+				fadeMap();
+				resetGame();
+				break;
+							
 		}
+		
+		
 	}
 	
 	function displayResponse(response){
-		//visualText.textContent = "Shall we play a game?";
 		
+				
 		if(increment()>9){
 			document.getElementById('history').firstElementChild.remove();
 			//increment.num=0;
@@ -754,7 +810,7 @@ loop();
 		// Reset the input for the next line
 		hiddenInput.value = '';
 		visualText.textContent = '';
-
+		scrollToBottom();
 		
 	}
 
@@ -850,6 +906,15 @@ loop();
 		gameTTTFaded = gameTTTFaded === true ? false : true;
 		fade(document.getElementById('ticTacToe'), gameTTTFaded, 2000);
 	}
+	
+	let controlsFaded=false;
+	
+	function fadeMyControls(){
+		controlsFaded = controlsFaded === true ? false : true;
+		fade(document.getElementById('mycontrols'), controlsFaded, 2000);
+	}
+	
+	
 	
 
 </script>
