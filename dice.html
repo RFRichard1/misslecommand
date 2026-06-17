@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Dice Roller</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        canvas {
+            background-color: #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <canvas id="diceCanvas" width="400" height="200"></canvas>
+    <br>
+    <button id="rollButton">Roll Dice</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('diceCanvas');
+    const ctx = canvas.getContext('2d');
+    const rollButton = document.getElementById('rollButton');
+
+    // Dice configuration
+    const dieSize = 120;
+    const dieY = (canvas.height - dieSize) / 2; // Center vertically
+    const die1X = 60;                           // Left die X position
+    const die2X = canvas.width - dieSize - 60;  // Right die X position
+    const borderRadius = 20;
+    const dotRadius = 8;
+
+    // Helper function to draw a rounded rectangle
+    function drawRoundedRect(x, y, size, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.arcTo(x + size, y, x + size, y + size, radius);
+        ctx.arcTo(x + size, y + size, x, y + size, radius);
+        ctx.arcTo(x, y + size, x, y, radius);
+        ctx.arcTo(x, y, x + size, y, radius);
+        ctx.closePath();
+    }
+
+    // Function to draw a single die face based on its value and position
+    function drawDie(x, y, value) {
+        // 1. Draw Die Background & Shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 5;
+        
+        ctx.fillStyle = '#ffffff';
+        drawRoundedRect(x, y, dieSize, borderRadius);
+        ctx.fill();
+
+        // Reset shadow so it doesn't affect the dots
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Border
+        ctx.strokeStyle = '#cccccc';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 2. Define relative dot positions inside the die (from 0 to 1)
+        const left = x + dieSize * 0.25;
+        const centerH = x + dieSize * 0.5;
+        const right = x + dieSize * 0.75;
+        
+        const top = y + dieSize * 0.25;
+        const centerV = y + dieSize * 0.5;
+        const bottom = y + dieSize * 0.75;
+
+        // Helper to draw a dot
+        function drawDot(cx, cy) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, dotRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#2b2b2b';
+            ctx.fill();
+        }
+
+        // 3. Draw dots based on the rolled value
+        switch (value) {
+            case 1:
+                drawDot(centerH, centerV);
+                break;
+            case 2:
+                drawDot(left, top);
+                drawDot(right, bottom);
+                break;
+            case 3:
+                drawDot(left, top);
+                drawDot(centerH, centerV);
+                drawDot(right, bottom);
+                break;
+            case 4:
+                drawDot(left, top);
+                drawDot(right, top);
+                drawDot(left, bottom);
+                drawDot(right, bottom);
+                break;
+            case 5:
+                drawDot(left, top);
+                drawDot(right, top);
+                drawDot(centerH, centerV);
+                drawDot(left, bottom);
+                drawDot(right, bottom);
+                break;
+            case 6:
+                drawDot(left, top);
+                drawDot(right, top);
+                drawDot(left, centerV);
+                drawDot(right, centerV);
+                drawDot(left, bottom);
+                drawDot(right, bottom);
+                break;
+        }
+    }
+
+    // Function to handle the rolling logic
+    function rollDice() {
+        // Clear the canvas completely
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Generate random numbers between 1 and 6
+        const die1Value = Math.floor(Math.random() * 6) + 1;
+        const die2Value = Math.floor(Math.random() * 6) + 1;
+
+        // Draw both dice
+        drawDie(die1X, dieY, die1Value);
+        drawDie(die2X, dieY, die2Value);
+    }
+
+    // Add click event listener to the button
+    rollButton.addEventListener('click', rollDice);
+
+    // Initial roll on page load so the canvas isn't blank
+    rollDice();
+</script>
+
+</body>
+</html>

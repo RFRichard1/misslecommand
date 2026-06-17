@@ -237,6 +237,46 @@ button:hover {
 	opacity: 0;
 }
 
+ .dice-container {
+	background-color: #050505;
+	padding: 5px;
+	border-radius: 15px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+	text-align: center;
+	position: absolute;
+	top: 500px;
+	left: 120px;
+	
+}
+
+.dice-canvas {
+	background-color: #050505;
+	border-radius: 10px;
+	margin-bottom: 20px;
+}
+
+.dice-button {
+	background-color: #050505;
+	color: white;
+	border: 2px;
+	padding: 12px 10px;
+	font-size: 18px;
+	font-weight: bold;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: background-color 0.2s, transform 0.1s;
+	//box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+}
+
+.dice-button:hover {
+	background-color: #222222;
+}
+
+.dice-button:active {
+	transform: scale(0.98);
+}
+
+
 </style>
 </head>
 
@@ -259,6 +299,11 @@ button:hover {
 		<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
 		<!--<button class="ttt-button" onclick="resetGame()">Reset Game</button>-->
     </div>
+    <div id="dicecontainer" class="dice-container">
+		<canvas id="diceCanvas" class="dice-canvas" width="126" height="60"></canvas>
+		<br>
+		<button id="dicerollButton" class="dice-button">Roll Dice</button>
+	</div>
 </div>
 
 <div id="game-container">
@@ -280,7 +325,9 @@ button:hover {
 <div id="mycontrols">
 	<button onclick="resetGame()">Reset</button>
 	<button onclick="fadeTTTGame();">Fade G</button>
-	<button onclick="fadeMap();">Fade M</button>
+	<button onclick="fadeMap();">Fade M</button>diceRoller
+	<button onclick="diceRoller();">Roller</button>playWav(id)
+	<button onclick="playWav(4);">Roller</button>
 </div>
 </body>
 
@@ -483,7 +530,7 @@ class PlayerMissile {
     constructor(tx, ty) {
         this.x = battery.x;
         this.y = battery.y;
-		this.misslespeed = 1.5;
+		this.misslespeed = 5.5;
 		
         const dx = tx - this.x;
         const dy = ty - this.y;
@@ -724,13 +771,13 @@ loop();
 		//container.scrollTo({ top: textView.scrollHeight, behavior: "smooth"});
 		
 	}
-	
+/*	
 		const textView = document.getElementById("myTextView");
 	textView.scrollTo({
 	  top: textView.scrollHeight,
 	  behavior: "smooth"
 });
-	
+*/	
 	// command states and events
 	// hello-> 
 	// 		game playing 
@@ -772,16 +819,20 @@ loop();
 				fadeMap();
 				break;
 			case ('bye'):
+				displayResponse("Goodbye!!");
 				fadeMyControls();
 				fadeTTTGame();
 				fadeMap();
-				resetGame();
+				//resetGame();
 				break;
 			case ('yes'):
 				fadeMyControls();
 				fadeTTTGame();
 				fadeMap();
 				resetGame();
+				break;
+			case ('r'):
+				rollDice();
 				break;
 							
 		}
@@ -870,8 +921,8 @@ loop();
 		el.style.display = "block";
 	  }
 
-	  const initial = fadeIn ? 0 : 1;
-	  const target = fadeIn ? 1 : 0;
+	  const initial = slideIn ? 0 : 1;
+	  const target = slideIn ? 1 : 0;
 
 	  function tick(now) {
 		const progress = Math.min((now - start) / duration, 1);
@@ -884,7 +935,7 @@ loop();
 		  requestAnimationFrame(tick);
 		} else {
 		  // optional cleanup when fading out
-		  if (!fadeIn) {
+		  if (!slideIn) {
 			el.style.display = "none";
 		  }
 		}
@@ -915,7 +966,25 @@ loop();
 	}
 	
 	
-	
+	function diceRoller( duration = 100) {
+	  const start = performance.now();
+	  
+	  function tick(now) {
+			const progress = Math.min((now - start) / duration, 1);
+			const initial = 1;
+			const target = 20;
+			// linear interpolation
+			const value = initial + (target - initial) * progress;
+			rollDice();
+
+			if (progress < 1) {
+			  requestAnimationFrame(tick);
+			} 
+			
+	  }
+
+	  requestAnimationFrame(tick);
+	}
 
 </script>
 <script> // Audio
@@ -940,6 +1009,9 @@ loop();
 				break;
 			case 3:
 				playKeyclick();
+				break;
+			case 4:
+				playBeepBop();
 				break;
 		}
 		
@@ -974,6 +1046,13 @@ loop();
 		audio.play();
 	}
 
+	function playBeepBop(){
+		
+		const audio = new Audio('./snd/beepbop.ogg');
+		
+		audio.volume = 1;
+		audio.play();
+	}
 
 </script>
 <script> // TicTacToe
@@ -1131,5 +1210,134 @@ loop();
 	// Initialize the first board draw
 	drawBoard();
 </script>
+<script> // dice 
+    const dicecanvas = document.getElementById('diceCanvas');
+    const dicectx = dicecanvas.getContext('2d');
+    const rollButton = document.getElementById('dicerollButton');
+
+    // Dice configuration
+    const dieSize = 50;
+    const dieY = (dicecanvas.height - dieSize) / 2; // Center vertically
+    const die1X = 10;                           // Left die X position
+    const die2X = dicecanvas.width - dieSize - 10;  // Right die X position
+    const borderRadius = 10;
+    const dotRadius = 4;
+
+	// current dice values
+	let d1Value = 1;
+	let d2Value = 1;
+
+    // Helper function to draw a rounded rectangle
+    function drawRoundedRect(x, y, size, radius) {
+        dicectx.beginPath();
+        dicectx.moveTo(x + radius, y);
+        dicectx.arcTo(x + size, y, x + size, y + size, radius);
+        dicectx.arcTo(x + size, y + size, x, y + size, radius);
+        dicectx.arcTo(x, y + size, x, y, radius);
+        dicectx.arcTo(x, y, x + size, y, radius);
+        dicectx.closePath();
+    }
+
+    // Function to draw a single die face based on its value and position
+    function drawDie(x, y, value) {
+        // 1. Draw Die Background & Shadow
+        dicectx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+        dicectx.shadowBlur = 10;
+        dicectx.shadowOffsetY = 5;
+        
+        dicectx.fillStyle = '#050505'; //'#ffffff'
+        drawRoundedRect(x, y, dieSize, borderRadius);
+        dicectx.fill();
+
+        // Reset shadow so it doesn't affect the dots
+        dicectx.shadowColor = 'transparent';
+        dicectx.shadowBlur = 0;
+        dicectx.shadowOffsetY = 0;
+
+        // Border
+        dicectx.strokeStyle = '#f8f8f8'; // '#cccccc'
+        dicectx.lineWidth = 2;
+        dicectx.stroke();
+
+        // 2. Define relative dot positions inside the die (from 0 to 1)
+        const left = x + dieSize * 0.25;
+        const centerH = x + dieSize * 0.5;
+        const right = x + dieSize * 0.75;
+        
+        const top = y + dieSize * 0.25;
+        const centerV = y + dieSize * 0.5;
+        const bottom = y + dieSize * 0.75;
+
+        // Helper to draw a dot
+        function drawDot(cx, cy) {
+            dicectx.beginPath();
+            dicectx.arc(cx, cy, dotRadius, 0, Math.PI * 2);
+            dicectx.fillStyle = '#f8f8f8'; //'#2b2b2b'
+            dicectx.fill();
+        }
+
+        // 3. Draw dots based on the rolled value
+        switch (value) {
+            case 1:
+                drawDot(centerH, centerV);
+                break;
+            case 2:
+                drawDot(left, top);
+                drawDot(right, bottom);
+                break;
+            case 3:
+                drawDot(left, top);
+                drawDot(centerH, centerV);
+                drawDot(right, bottom);
+                break;
+            case 4:
+                drawDot(left, top);
+                drawDot(right, top);
+                drawDot(left, bottom);
+                drawDot(right, bottom);
+                break;
+            case 5:
+                drawDot(left, top);
+                drawDot(right, top);
+                drawDot(centerH, centerV);
+                drawDot(left, bottom);
+                drawDot(right, bottom);
+                break;
+            case 6:
+                drawDot(left, top);
+                drawDot(right, top);
+                drawDot(left, centerV);
+                drawDot(right, centerV);
+                drawDot(left, bottom);
+                drawDot(right, bottom);
+                break;
+        }
+    }
+
+    // Function to handle the rolling logic
+    function rollDice() {
+        // Clear the canvas completely
+        dicectx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Generate random numbers between 1 and 6
+        const die1Value = Math.floor(Math.random() * 6) + 1;
+        const die2Value = Math.floor(Math.random() * 6) + 1;
+		
+		// set values
+		d1Value = die1Value;
+		d2Value = die2Value;
+		
+        // Draw both dice
+        drawDie(die1X, dieY, die1Value);
+        drawDie(die2X, dieY, die2Value);
+    }
+
+    // Add click event listener to the button
+    rollButton.addEventListener('click', rollDice);
+
+    // Initial roll on page load so the canvas isn't blank
+    rollDice();
+</script>
+
 
 </html>
