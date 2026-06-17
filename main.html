@@ -31,7 +31,7 @@ body::-webkit-scrollbar {
 
 }
 
-canvas {
+.map-canvas {
     background: #000;
     border: 2px solid #ff0033;
     cursor: crosshair;
@@ -174,6 +174,33 @@ canvas {
 	50% { background-color: #00ff66; }
 }
 
+#status {
+		font-size: 1.2rem;
+		font-weight: bold;
+		margin-bottom: 20px;
+		color: #555;
+}
+.ttt-canvas {
+	background-color: #050505;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+	border-radius: 8px;
+	cursor: pointer;
+}
+.ttt-button {
+	margin-top: 20px;
+	padding: 10px 20px;
+	font-size: 1rem;
+	font-weight: bold;
+	color: black;
+	background-color: #f8f8f8;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+button:hover {
+	background-color: #f8f8f8;
+}
 
 </style>
 </head>
@@ -192,12 +219,15 @@ canvas {
 			<textarea id="hidden-input" autofocus></textarea>
 		</div>
 	</div>
+	<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
+    <button class="ttt-button" onclick="resetGame()">Reset Game</button>
 </div>
+
 <div id="game-container">
     <div id="score-board" class="ui-element"></div>
     <div id="ammo-board" class="ui-element"></div>
 
-    <canvas id="gameCanvas" class="cimg" width="800" height="600">
+    <canvas id="gameCanvas" class="cimg map-canvas" width="800" height="600">
 		<div class="country">
 			
 		</div>
@@ -723,6 +753,147 @@ function playMid(){
 }
 
 </script>
+<script>
+	const canvas = document.getElementById('ticTacToe');
+	const ctx = canvas.getContext('2d');
+	const statusDisplay = document.getElementById('status');
+	
+	const SIZE = 300;
+	const CELL_SIZE = SIZE / 3;
+	
+	let board = ['', '', '', '', '', '', '', '', ''];
+	let currentPlayer = 'X';
+	let isGameActive = true;
 
+	// Line width for drawings
+	ctx.lineWidth = 6;
+	ctx.lineCap = 'round';
+
+	function drawBoard() {
+		ctx.clearRect(0, 0, SIZE, SIZE);
+		ctx.strokeStyle = '#cccccc';
+		
+		// Draw vertical lines
+		for (let i = 1; i < 3; i++) {
+			ctx.beginPath();
+			ctx.moveTo(i * CELL_SIZE, 10);
+			ctx.lineTo(i * CELL_SIZE, SIZE - 10);
+			ctx.stroke();
+		}
+		
+		// Draw horizontal lines
+		for (let i = 1; i < 3; i++) {
+			ctx.beginPath();
+			ctx.moveTo(10, i * CELL_SIZE);
+			ctx.lineTo(SIZE - 10, i * CELL_SIZE);
+			ctx.stroke();
+		}
+
+		// Draw X and O markers based on board state
+		for (let i = 0; i < 9; i++) {
+			const col = i % 3;
+			const row = Math.floor(i / 3);
+			const x = col * CELL_SIZE;
+			const y = row * CELL_SIZE;
+
+			if (board[i] === 'X') {
+				drawX(x, y);
+			} else if (board[i] === 'O') {
+				drawO(x, y);
+			}
+		}
+	}
+
+	function drawX(x, y) {
+		ctx.strokeStyle = '#f4f4f4';
+		const offset = 25;
+		
+		ctx.beginPath();
+		ctx.moveTo(x + offset, y + offset);
+		ctx.lineTo(x + CELL_SIZE - offset, y + CELL_SIZE - offset);
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.moveTo(x + CELL_SIZE - offset, y + offset);
+		ctx.lineTo(x + offset, y + CELL_SIZE - offset);
+		ctx.stroke();
+	}
+
+	function drawO(x, y) {
+		ctx.strokeStyle = '#f4f4f4';
+		const centerOffset = CELL_SIZE / 2;
+		const radius = CELL_SIZE / 2 - 25;
+
+		ctx.beginPath();
+		ctx.arc(x + centerOffset, y + centerOffset, radius, 0, Math.PI * 2);
+		ctx.stroke();
+	}
+
+	const winningConditions = [
+		[0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+		[0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+		[0, 4, 8], [2, 4, 6]             // Diagonals
+	];
+
+	function checkResult() {
+		let roundWon = false;
+
+		for (let i = 0; i < winningConditions.length; i++) {
+			const [a, b, c] = winningConditions[i];
+			if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+				roundWon = true;
+				break;
+			}
+		}
+
+		if (roundWon) {
+			statusDisplay.textContent = `Player ${currentPlayer} Wins!`;
+			isGameActive = false;
+			return;
+		}
+
+		if (!board.includes('')) {
+			statusDisplay.textContent = "It's a Tie!";
+			isGameActive = false;
+			return;
+		}
+
+		// Switch player
+		currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+		statusDisplay.textContent = `Player ${currentPlayer}'s Turn`;
+	}
+
+	canvas.addEventListener('click', function(event) {
+		if (!isGameActive) return;
+
+		// Get click coordinates relative to the canvas
+		const rect = canvas.getBoundingClientRect();
+		const clickX = event.clientX - rect.left;
+		const clickY = event.clientY - rect.top;
+
+		// Determine which cell was clicked
+		const col = Math.floor(clickX / CELL_SIZE);
+		const row = Math.floor(clickY / CELL_SIZE);
+		const index = row * 3 + col;
+
+		// If the cell is empty, claim it
+		if (board[index] === '') {
+			board[index] = currentPlayer;
+			drawBoard();
+			checkResult();
+		}
+	});
+
+	function resetGame() {
+		board = ['', '', '', '', '', '', '', '', ''];
+		currentPlayer = 'X';
+		isGameActive = true;
+		statusDisplay.textContent = "Player X's Turn";
+		drawBoard();
+	}
+
+	// Initialize the first board draw
+	drawBoard();
+</script>
 </body>
 </html>
