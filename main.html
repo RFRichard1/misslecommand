@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Missle</title>
+<title>Missile</title>
 
 <style>
+@font-face {
+  font-family: 'terminal';
+  src: url('fonts/WarGames_Terminal_R_W.woff2') format('woff2'),
+       url('fonts/WarGames_Terminal_R_W.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+	
 body {
     margin: 0;
     background: #050505;
@@ -28,10 +37,12 @@ body::-webkit-scrollbar {
 
 #game-container {
     position: relative;
-
+    opacity: 0;
+    
 }
 
 .map-canvas {
+    font-family: 'terminal', sans-serif;
     background: #000;
     border: 2px solid #ff0033;
     cursor: crosshair;
@@ -45,8 +56,8 @@ body::-webkit-scrollbar {
     pointer-events: none;
 }
 
-#score-board { top: 10px; left: 10px; }
-#ammo-board { top: 10px; right: 10px; }
+#score-board { font-family: 'terminal', sans-serif; top: 10px; left: 10px; }
+#ammo-board { font-family: 'terminal', sans-serif; top: 10px; right: 10px; }
 
 #game-over-screen {
     display: none;
@@ -93,7 +104,7 @@ body::-webkit-scrollbar {
 	padding-left: 55px;
     padding-top: 75px;
     color: #00ff00;
-	font-size: 8px;
+	font-size: 12px;
 	font: "monospace";
 } 
 
@@ -102,7 +113,7 @@ body::-webkit-scrollbar {
 	//background-color: #0a0a0a;
 	color: #00ff66;
 	font-family: 'Courier New', Courier, monospace;
-	font-size: 8px;
+	font-size: 12px;
 	margin: 0;
 	padding: 0px;
 	box-sizing: border-box;
@@ -117,11 +128,13 @@ body::-webkit-scrollbar {
 
 /* Container that holds all output and the active line */
 #terminal-container {
+	font-family: 'terminal', sans-serif;
 	flex: 1;
 	overflow-y: auto; /* Standard scrolling inside the terminal */
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;
+	height: 220px;
 	&::-webkit-scrollbar {
         display: none;
     }
@@ -179,12 +192,14 @@ body::-webkit-scrollbar {
 		font-weight: bold;
 		margin-bottom: 20px;
 		color: #555;
+		display: none;
 }
 .ttt-canvas {
 	background-color: #050505;
 	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 	border-radius: 8px;
 	cursor: pointer;
+	
 }
 .ttt-button {
 	margin-top: 20px;
@@ -199,7 +214,23 @@ body::-webkit-scrollbar {
 	transition: background 0.2s;
 }
 button:hover {
-	background-color: #f8f8f8;
+	background-color: #f8f8f8ff;
+}
+
+.ttt-container {
+	width: 300px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center; /* Centers horizontally */
+	align-items: center;     /* Centers vertically */
+	height: 60vh;
+	padding-left: 75px;  
+	
+}
+
+
+#ticTacToe {
+	opacity: 0;
 }
 
 </style>
@@ -219,8 +250,11 @@ button:hover {
 			<textarea id="hidden-input" autofocus></textarea>
 		</div>
 	</div>
-	<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
-    <button class="ttt-button" onclick="resetGame()">Reset Game</button>
+	<div id="ttt-container" class="ttt-container">
+		<div id="status" hidden>Player X's Turn</div>
+		<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
+		<button class="ttt-button" onclick="resetGame()">Reset Game</button>
+    </div>
 </div>
 
 <div id="game-container">
@@ -239,10 +273,15 @@ button:hover {
         <button id="restartBtn">Restart</button>
     </div>
 </div>
-<button onclick="playWav(0)">Play</button>
-<button onclick="playWav(1)">Play</button>
-<button onclick="playWav(2)">Play</button>
-<script>
+<button onclick="fade(document.getElementById('ticTacToe'), 1000);">fade</button>
+<button onclick="fadeTTTGame();">Play</button>
+<button onclick="fadeMap();">fade</button>
+</body>
+
+<script> // Missile Game
+
+// Missile game code
+
 window.addEventListener("DOMContentLoaded", () => {
 
 const canvas = document.getElementById("gameCanvas");
@@ -280,8 +319,8 @@ let battery;
 /* ---------------- UI ---------------- */
 
 function updateUI() {
-    scoreBoard.innerHTML = `SCORE: ${score}<br>STAGE: ${stage}`;
-    ammoBoard.innerHTML = `AMMO: ${ammo}`;
+    scoreBoard.innerHTML = `Battle: ${stage}<br>Total Casualties: ${score}<br>Elapsed Time: 00:00:00`;
+    ammoBoard.innerHTML = `Thermonuclear ICBMS: ${ammo}`;
 }
 
 /* ---------------- TRAILS ---------------- */
@@ -624,7 +663,9 @@ loop();
 });
 
 </script>
-<script>
+<script> // Terminal display funtions
+	// handles terminal processing
+	
 	const hiddenInput = document.getElementById('hidden-input');
 	const visualText = document.getElementById('visual-text');
 	const history = document.getElementById('history');
@@ -664,6 +705,10 @@ loop();
 
 			// Ensure the terminal scrolls up if it hits the bottom
 			scrollToBottom();
+			playKeyclick();
+		}else
+		{
+			playKeyclick();
 		}
 	});
 
@@ -682,6 +727,7 @@ loop();
 			displayResponse('Available commands: help, clear, hello');
 		} else if (trimmedCommand === 'clear') {
 			document.getElementById('history').innerHTML = '';
+			increment.num=0;
 		} else if (trimmedCommand === 'hello'){
 			displayResponse("Shall we play a game?");
 		}
@@ -689,6 +735,12 @@ loop();
 	
 	function displayResponse(response){
 		//visualText.textContent = "Shall we play a game?";
+		
+		if(increment()>9){
+			document.getElementById('history').firstElementChild.remove();
+			//increment.num=0;
+		}
+		
 		hiddenInput.value = response;
 		const typedText = hiddenInput.value;
 
@@ -702,63 +754,172 @@ loop();
 		// Reset the input for the next line
 		hiddenInput.value = '';
 		visualText.textContent = '';
+
+		
+	}
+
+	function increment() {
+		// Initialize if it doesn't exist yet
+		if (typeof increment.num === 'undefined') {
+		increment.num = 0; 
+		}
+
+		increment.num++;
+		return increment.num;
 	}
 	
 	processCommand("help");
+
 	
 </script>
 
-<script>
-// Audio 
+<script> // element animations
+	
+	// element animation functions
+	
+	function fade(el, fadeIn = true, duration = 1000) {
+	  const start = performance.now();
 
-function initAudio(){
+	  if (fadeIn) {
+		el.style.display = "block";
+	  }
 
-}
+	  const initial = fadeIn ? 0 : 1;
+	  const target = fadeIn ? 1 : 0;
 
-function playWav(id){
-	switch(id){
-		
-		case 0:
-			playBoom();
-			break;
-		case 1:
-			playHigh();
-			break;
-		case 2:
-			playMid();
-			break;
+	  function tick(now) {
+		const progress = Math.min((now - start) / duration, 1);
+
+		// linear interpolation
+		const value = initial + (target - initial) * progress;
+		el.style.opacity = value;
+
+		if (progress < 1) {
+		  requestAnimationFrame(tick);
+		} else {
+		  // optional cleanup when fading out
+		  if (!fadeIn) {
+			//el.style.display = "none";
+		  }
+		}
+	  }
+
+	  requestAnimationFrame(tick);
+	}
+
+	function slide(el, slideIn = true, duration = 1000) {
+	  const start = performance.now();
+
+	  if (slideIn) {
+		el.style.display = "block";
+	  }
+
+	  const initial = fadeIn ? 0 : 1;
+	  const target = fadeIn ? 1 : 0;
+
+	  function tick(now) {
+		const progress = Math.min((now - start) / duration, 1);
+
+		// linear interpolation
+		const value = initial + (target - initial) * progress;
+		el.style.width = value;
+
+		if (progress < 1) {
+		  requestAnimationFrame(tick);
+		} else {
+		  // optional cleanup when fading out
+		  if (!fadeIn) {
+			el.style.display = "none";
+		  }
+		}
+	  }
+
+	  requestAnimationFrame(tick);
 	}
 	
+	let mapFaded=false;
+		
+	function fadeMap(){
+		mapFaded = mapFaded === true ? false : true;
+		fade(document.getElementById('game-container'), mapFaded, 2000);
+	}
 	
-}
-function playHigh(){
-	const audio = new Audio('./snd/high.wav');
+	let gameTTTFaded=false;
 	
-	audio.volume = 1;
-	audio.play();
-}
-
-function playBoom(){
+	function fadeTTTGame(){
+		gameTTTFaded = gameTTTFaded === true ? false : true;
+		fade(document.getElementById('ticTacToe'), gameTTTFaded, 2000);
+	}
 	
-	const audio = new Audio('./snd/boom.wav');
-	
-	audio.volume = 1;
-	audio.play();
-}
-
-function playMid(){
-	const audio = new Audio('./snd/mid.wav');
-	audio.volume = 1;
-	audio.play();
-}
 
 </script>
-<script>
+<script> // Audio
+	// Audio 
+	// sound functions
+
+	function initAudio(){
+
+	}
+
+	function playWav(id){
+		switch(id){
+			
+			case 0:
+				playBoom();
+				break;
+			case 1:
+				playHigh();
+				break;
+			case 2:
+				playMid();
+				break;
+			case 3:
+				playKeyclick();
+				break;
+		}
+		
+		
+	}
+	function playHigh(){
+		const audio = new Audio('./snd/high.wav');
+		
+		audio.volume = 1;
+		audio.play();
+	}
+
+	function playBoom(){
+		
+		const audio = new Audio('./snd/boom.wav');
+		
+		audio.volume = 1;
+		audio.play();
+	}
+
+	function playMid(){
+		const audio = new Audio('./snd/mid.wav');
+		audio.volume = 1;
+		audio.play();
+	}
+
+	function playKeyclick(){
+		
+		const audio = new Audio('./snd/keyclick.wav');
+		
+		audio.volume = 1;
+		audio.play();
+	}
+
+
+</script>
+<script> // TicTacToe
+	
+	// tic Tac Toe game functions
+	
 	const canvas = document.getElementById('ticTacToe');
 	const ctx = canvas.getContext('2d');
 	const statusDisplay = document.getElementById('status');
 	
-	const SIZE = 300;
+	const SIZE = 240;
 	const CELL_SIZE = SIZE / 3;
 	
 	let board = ['', '', '', '', '', '', '', '', ''];
@@ -848,12 +1009,14 @@ function playMid(){
 
 		if (roundWon) {
 			statusDisplay.textContent = `Player ${currentPlayer} Wins!`;
+			displayResponse(statusDisplay.textContent);
 			isGameActive = false;
 			return;
 		}
 
 		if (!board.includes('')) {
 			statusDisplay.textContent = "It's a Tie!";
+			displayResponse(statusDisplay.textContent);
 			isGameActive = false;
 			return;
 		}
@@ -861,6 +1024,7 @@ function playMid(){
 		// Switch player
 		currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
 		statusDisplay.textContent = `Player ${currentPlayer}'s Turn`;
+		displayResponse(statusDisplay.textContent);
 	}
 
 	canvas.addEventListener('click', function(event) {
@@ -879,6 +1043,11 @@ function playMid(){
 		// If the cell is empty, claim it
 		if (board[index] === '') {
 			board[index] = currentPlayer;
+			if(currentPlayer==='X'){
+				playWav(2);
+			}else{
+				playWav(1);
+			}
 			drawBoard();
 			checkResult();
 		}
@@ -888,12 +1057,14 @@ function playMid(){
 		board = ['', '', '', '', '', '', '', '', ''];
 		currentPlayer = 'X';
 		isGameActive = true;
+		processCommand('clear');
 		statusDisplay.textContent = "Player X's Turn";
+		displayResponse(statusDisplay.textContent);
 		drawBoard();
 	}
 
 	// Initialize the first board draw
 	drawBoard();
 </script>
-</body>
+
 </html>
