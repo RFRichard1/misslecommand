@@ -703,19 +703,22 @@ function playWav(id){
 }
 function playHigh(){
 	const audio = new Audio('snd/high.wav');
-	//audio.volume = .5;
+	
+	audio.volume = 1;
 	audio.play();
 }
 
 function playBoom(){
+	
 	const audio = new Audio('snd/boom.wav');
+	
 	audio.volume = 1;
 	audio.play();
 }
 
 function playMid(){
 	const audio = new Audio('snd/mid.wav');
-	audio.volume = .5;
+	audio.volume = 1;
 	audio.play();
 }
 
