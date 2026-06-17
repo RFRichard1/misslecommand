@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    /* Outer layout wrapper */
+    .page-layout {
+      display: grid;
+      grid-template-columns: 300px 800px;
+      height: 700px;
+      gap: 15px;
+      background-color: #f0f0f0;
+      padding: 15px;
+      font-family: sans-serif;
+    }
+
+    /* Column 1: Turned into a nested grid container */
+    .column-left {
+      display: grid;
+      grid-template-rows: 300px 100px 300px;
+      gap: 10px;
+    }
+
+    /* Column 2: Standard single-track item */
+    .column-right {
+      background-color: #4caf50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    /* Styling for the nested rows in column 1 */
+    .row-item {
+      background-color: #2196f3;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    .row-item.middle {
+      background-color: #ff9800; /* Distinct color for the 100px row */
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-layout">
+    <!-- First Column (300px wide, contains 3 explicit rows) -->
+    <div class="column-left">
+      <div class="row-item">Row 1 (300px)</div>
+      <div class="row-item middle">Row 2 (100px)</div>
+      <div class="row-item">Row 3 (300px)</div>
+    </div>
+
+    <!-- Second Column (800px wide, spans full 700px height) -->
+    <div class="column-right">
+      Column 2 (800px wide x 700px high)
+    </div>
+  </div>
+
+</body>
+</html>
