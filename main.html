@@ -201,21 +201,6 @@ body::-webkit-scrollbar {
 	cursor: pointer;
 	
 }
-.ttt-button {
-	margin-top: 20px;
-	padding: 10px 20px;
-	font-size: 1rem;
-	font-weight: bold;
-	color: black;
-	background-color: #f8f8f8;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-	transition: background 0.2s;
-}
-button:hover {
-	background-color: #f8f8f8ff;
-}
 
 .ttt-container {
 	width: 300px;
@@ -297,8 +282,7 @@ button:hover {
 	<div id="ttt-container" class="ttt-container">
 		<div id="status" hidden>Player X's Turn</div>
 		<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
-		<!--<button class="ttt-button" onclick="resetGame()">Reset Game</button>-->
-    </div>
+	</div>
     <div id="dicecontainer" class="dice-container">
 		<canvas id="diceCanvas" class="dice-canvas" width="126" height="60"></canvas>
 		<br>
@@ -327,7 +311,8 @@ button:hover {
 	<button onclick="fadeTTTGame();">Fade G</button>
 	<button onclick="fadeMap();">Fade M</button>diceRoller
 	<button onclick="diceRoller();">Roller</button>playWav(id)
-	<button onclick="playWav(4);">Roller</button>
+	<button onclick="playWav(4);">Roller</button>closegc()
+	<button onclick="closegc();">Roller</button>closegc()
 </div>
 </body>
 
@@ -1338,5 +1323,107 @@ loop();
     rollDice();
 </script>
 
+<script> // Easing functions
+
+const Easings = {
+    linear: t => t,
+
+    easeInQuad: t => t * t,
+    easeOutQuad: t => t * (2 - t),
+    easeInOutQuad: t =>
+        t < 0.5
+            ? 2 * t * t
+            : -1 + (4 - 2 * t) * t,
+
+    easeInCubic: t => t * t * t,
+    easeOutCubic: t => (--t) * t * t + 1,
+    easeInOutCubic: t =>
+        t < 0.5
+            ? 4 * t * t * t
+            : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
+};
+
+function animate({
+    from = 0,
+    to = 1,
+    duration = 1000,
+    easing = "linear",
+    onUpdate,
+    onComplete = null
+}) {
+    const ease = Easings[easing] || Easings.linear;
+    const start = performance.now();
+
+    function frame(now) {
+        const elapsed = now - start;
+        const t = Math.min(elapsed / duration, 1);
+
+        const value = from + (to - from) * ease(t);
+
+        onUpdate(value);
+
+        if (t < 1) {
+            requestAnimationFrame(frame);
+        } else if (onComplete) {
+            onComplete();
+        }
+    }
+
+    requestAnimationFrame(frame);
+}
+
+function closegc(){
+		
+	animate({
+    from: 600,
+    to: 1,
+    duration: 1000,
+    easing: "easeOutCubic",
+    onUpdate: value => {
+        document.getElementById("gameCanvas").style.height = value+"px";
+    },
+    onComplete: () => {
+        console.log("done");
+    }
+});
+
+	
+}
+
+// Example usage
+/*
+animate({
+    from: 0,
+    to: 1,
+    duration: 1000,
+    easing: "easeOutCubic",
+    onUpdate: value => {
+        document.getElementById("myDiv").style.opacity = value;
+    },
+    onComplete: () => {
+        console.log("done");
+    }
+});
+
+
+animate({
+    duration: 2000,
+    easing: "easeInOutQuad",
+    onUpdate: t => {
+        console.log(t); // 0.0 -> 1.0 eased
+    }
+});
+
+await animate({
+    from: 0,
+    to: 100,
+    duration: 1000,
+    easing: "easeOutQuad",
+    onUpdate: x => sprite.x = x
+});
+*/
+
+
+</script>
 
 </html>
