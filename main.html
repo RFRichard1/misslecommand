@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <title>Missile</title>
 
-<style>
+<style> /* Page 		*/
+
 @font-face {
   font-family: 'terminal';
   src: url('fonts/WarGames_Terminal_R_W.woff2') format('woff2'),
@@ -34,6 +35,65 @@ body::-webkit-scrollbar {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+#mycontrols {
+	display: flex;
+	flex-direction: column;
+	opacity: 1;
+}
+
+</style>
+<style>
+    /* Outer layout wrapper */
+    .page-layout {
+      display: grid;
+      grid-template-columns: 400px 800px;
+      height: 800px;
+      /*gap: 15px;*/
+      /*background-color: #f0f0f0;*/
+      padding: 15px;
+      font-family: sans-serif;
+    }
+
+    /* Column 1: Turned into a nested grid container */
+    .column-left {
+      display: grid;
+      grid-template-rows: 300px 70px 300px;
+      gap: 10px;
+    }
+
+    /* Column 2: Standard single-track item */
+    .column-right {
+      /*background-color: #4caf50;*/
+      color: white;
+      
+      display: flex;
+      /*align-items: center;*/
+      /*justify-content: center;*/
+      border-radius: 6px;
+	 }
+
+    /* Styling for the nested rows in column 1 */
+    .row-item {
+      /*background-color: #2196f3;*/
+      color: white;
+      /*
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      */
+    }
+    .row-item.middle {
+      /*background-color: #ff9800; *//* Distinct color for the 100px row */
+      width: 380px;
+    }
+</style>
+
+
+
+
+<style> /* Game 		*/
 
 #game-container {
     position: relative;
@@ -86,17 +146,16 @@ body::-webkit-scrollbar {
     background-repeat: no-repeat;  /* Prevents tiling */
     // border: 2px solid #FFF;
 }
-
-
+</style>
+<style> /* Terminal 	*/
+	
 .terminal {
 	width: 400px;
-	height: 600px;
 	border: 2px solid #FF;
 	background-image: url('./art/crt.png');
     background-size: contain;       
     background-position: 0px 0px;   
     background-repeat: no-repeat;
-    margin-right: 10px;  
     
 }
 
@@ -194,6 +253,13 @@ body::-webkit-scrollbar {
 		color: #555;
 		display: none;
 }
+
+</style>
+<style> /* Mini Games 	*/
+#ticTacToe {
+	opacity: 0;
+}
+
 .ttt-canvas {
 	background-color: #050505;
 	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -208,30 +274,21 @@ body::-webkit-scrollbar {
 	flex-direction: column;
 	justify-content: center; /* Centers horizontally */
 	align-items: center;     /* Centers vertically */
-	height: 60vh;
+	height: 300px;
 	padding-left: 75px;  
 	
 }
 
-
-#ticTacToe {
-	opacity: 0;
-}
-
-#mycontrols {
-	opacity: 0;
-}
-
- .dice-container {
+.dice-container {
 	background-color: #050505;
-	padding: 5px;
 	border-radius: 15px;
 	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 	text-align: center;
+	/*
 	position: absolute;
 	top: 500px;
 	left: 120px;
-	
+	*/
 }
 
 .dice-canvas {
@@ -264,55 +321,60 @@ body::-webkit-scrollbar {
 
 </style>
 </head>
-
 <body>
-<div class="terminal">
-	<div class="terminal-text">
-		<div class="terminal-body no-scrollbar">
-			<div id="terminal-container">
-				<div id="history"></div>
-				<div class="input-line">
-					<span class="prompt">&gt;</span>
-					<span id="visual-text"></span><span class="cursor"></span>
+<div class="page-layout">
+	<div class="column-left">
+		<div class="terminal row-item">
+			<div class="terminal-text">
+				<div class="terminal-body no-scrollbar">
+					<div id="terminal-container">
+						<div id="history"></div>
+						<div class="input-line">
+							<span class="prompt">&gt;</span>
+							<span id="visual-text"></span><span class="cursor"></span>
+						</div>
+					</div>
+					<textarea id="hidden-input" autofocus></textarea>
 				</div>
 			</div>
-			<textarea id="hidden-input" autofocus></textarea>
+		</div>
+		<div id="dicecontainer" class="dice-container row-item middle">
+				<canvas id="diceCanvas" class="dice-canvas" width="126" height="60"></canvas>
+		</div>
+		<div id="ttt-container" class="ttt-container row-item">
+			<div id="status" hidden>Player X's Turn</div>
+			<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
 		</div>
 	</div>
-	<div id="ttt-container" class="ttt-container">
-		<div id="status" hidden>Player X's Turn</div>
-		<canvas id="ticTacToe" class="ttt-canvas" width="300" height="300"></canvas>
-	</div>
-    <div id="dicecontainer" class="dice-container">
-		<canvas id="diceCanvas" class="dice-canvas" width="126" height="60"></canvas>
-		<br>
-		<button id="dicerollButton" class="dice-button">Roll Dice</button>
-	</div>
-</div>
+	<div class="column-right">
+		<div id="game-container">
+			<div id="score-board" class="ui-element"></div>
+			<div id="ammo-board" class="ui-element"></div>
 
-<div id="game-container">
-    <div id="score-board" class="ui-element"></div>
-    <div id="ammo-board" class="ui-element"></div>
+			<canvas id="gameCanvas" class="cimg map-canvas" width="800" height="600">
+				<div class="country">
+					
+				</div>
+			</canvas>
 
-    <canvas id="gameCanvas" class="cimg map-canvas" width="800" height="600">
-		<div class="country">
-			
+			<div id="game-over-screen">
+				<h1>GAME OVER</h1>
+				<p id="final-score"></p>
+				<button id="restartBtn">Restart</button>
+			</div>
 		</div>
-    </canvas>
-
-    <div id="game-over-screen">
-        <h1>GAME OVER</h1>
-        <p id="final-score"></p>
-        <button id="restartBtn">Restart</button>
-    </div>
+	</div>
 </div>
 <div id="mycontrols">
 	<button onclick="resetGame()">Reset</button>
-	<button onclick="fadeTTTGame();">Fade G</button>
-	<button onclick="fadeMap();">Fade M</button>diceRoller
-	<button onclick="diceRoller();">Roller</button>playWav(id)
-	<button onclick="playWav(4);">Roller</button>closegc()
-	<button onclick="closegc();">Roller</button>closegc()
+	<button onclick="fadeTTTGame();">TicTacToe</button>
+	<button onclick="fadeMap();">Game Map</button>
+	<button onclick="dicerollease();">Roll Dice</button>
+	<button onclick="playWav(4);">BeepBop</button>
+	<button onclick="closegc();">Close Game</button>
+	<button onclick="console.log(getBoardString());">Get BS</button>
+	<button onclick="compVscomp();">Comp VS Comp On</button>
+	<button onclick="isPlayingComputer=true;">Comp VS Comp Off</button>
 </div>
 </body>
 
@@ -700,6 +762,15 @@ loop();
 
 });
 
+function getRandomIntInclusive(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
+
+
 </script>
 <script> // Terminal display functions
 	// handles terminal processing
@@ -864,7 +935,7 @@ loop();
 
 	
 </script>
-<script> // element animations
+<script> // Element animations
 	
 	// element animation functions
 	
@@ -1049,7 +1120,7 @@ loop();
 	
 	const SIZE = 240;
 	const CELL_SIZE = SIZE / 3;
-	
+		
 	let board = ['', '', '', '', '', '', '', '', ''];
 	let currentPlayer = 'X';
 	let isGameActive = true;
@@ -1139,6 +1210,9 @@ loop();
 			statusDisplay.textContent = `Player ${currentPlayer} Wins!`;
 			displayResponse(statusDisplay.textContent);
 			isGameActive = false;
+			playWav(4);
+			dicerollease();
+			
 			return;
 		}
 
@@ -1155,6 +1229,9 @@ loop();
 		displayResponse(statusDisplay.textContent);
 	}
 
+	let isPlayingComputer=false;
+	
+	
 	canvas.addEventListener('click', function(event) {
 		if (!isGameActive) return;
 
@@ -1176,10 +1253,68 @@ loop();
 			}else{
 				playWav(1);
 			}
+
 			drawBoard();
 			checkResult();
+			console.log(getBoardString());
+			
+			if(isPlayingComputer&&isGameActive){
+				isGameActive = false;
+				let timeoutID = setTimeout(computerMove, 700);
+			}
 		}
 	});
+	
+	function computerMove(player){
+		// opponent move
+		console.log(" THE P "+player);
+		let playerCur='';
+		if(player!=='X'||player!=='O'){
+			playerCur='O';
+		}else{
+			playerCur=player;
+		}
+		isGameActive = true;
+		playWav(1);
+		bs = playTicTacToe(getBoardString(), playerCur);
+		setBoardFromString(bs);
+		drawBoard();
+		checkResult();
+			
+		console.log(getBoardString());
+		
+	}
+	
+	function compVScompMove(){
+			console.log(currentPlayer);
+			computerMove(currentPlayer);
+	}
+	
+	
+	const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+	async function compVscomp(){
+		
+		while(!isPlayingComputer){
+			for(let i=0;i<9;i++){
+				if(i%2){
+					playWav(1);
+				}else
+				{	playWav(2);
+				}
+				bs = playTicTacToe(getBoardString(), currentPlayer);
+				setBoardFromString(bs);
+				drawBoard();
+				checkResult();
+				await sleep(800);
+				if(isGameActive===false)
+					break;
+				
+			}
+			resetGame();
+			await sleep(1500);
+		}
+		
+	}
 
 	function resetGame() {
 		board = ['', '', '', '', '', '', '', '', ''];
@@ -1190,14 +1325,138 @@ loop();
 		displayResponse(statusDisplay.textContent);
 		drawBoard();
 	}
+	
+	function getBoardString(){
+		let bs = "";
+		for (let i = 0; i < 9; i++) {
+			if (board[i] !== ''){ 
+				bs = bs + board[i];
+			}else
+			{
+				bs = bs + "#";
+			}
+		}
+		return bs;
+	}
+	
+	function setBoardFromString(bs){
+		for (let i = 0; i < 9; i++) {
+			barray=bs.split('');
+			if (bs[i] !== '#'){ 
+				board[i]=bs[i];
+			}
+		}
+	}
+
+	function playTicTacToe(boardString, player) {
+		// 1. Convert the string into a 9-element array for easier manipulation
+		let board = boardString.split('');
+		const opponent = player === 'X' ? 'O' : 'X';
+
+		// 2. Helper function to check if someone has won or if it's a draw
+		function checkWinner(b) {
+			const winLines = [
+				[0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+				[0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+				[0, 4, 8], [2, 4, 6]             // Diagonals
+			];
+
+			for (let line of winLines) {
+				const [a, bRow, c] = line;
+				if (b[a] !== '#' && b[a] === b[bRow] && b[a] === b[c]) {
+					return b[a]; // Returns 'X' or 'O'
+				}
+			}
+
+			if (!b.includes('#')) return 'tie';
+			return null; // Game is still ongoing
+		}
+
+		// 3. The Minimax algorithm with Alpha-Beta Pruning for performance
+		function minimax(b, depth, isMaximizing, alpha, beta) {
+			let score = checkWinner(b);
+			if (score === player) return 10 - depth;
+			if (score === opponent) return depth - 10;
+			if (score === 'tie') return 0;
+
+			if (isMaximizing) {
+				let maxEval = -Infinity;
+				for (let i = 0; i < 9; i++) {
+					if (b[i] === '#') {
+						b[i] = player;
+						let evaluation = minimax(b, depth + 1, false, alpha, beta);
+						b[i] = '#'; // Undo move
+						maxEval = Math.max(maxEval, evaluation);
+						alpha = Math.max(alpha, evaluation);
+						if (beta <= alpha) break; // Prune branch
+					}
+				}
+				return maxEval;
+			} else {
+				let minEval = Infinity;
+				for (let i = 0; i < 9; i++) {
+					if (b[i] === '#') {
+						b[i] = opponent;
+						let evaluation = minimax(b, depth + 1, true, alpha, beta);
+						b[i] = '#'; // Undo move
+						minEval = Math.min(minEval, evaluation);
+						beta = Math.min(beta, evaluation);
+						if (beta <= alpha) break; // Prune branch
+					}
+				}
+				return minEval;
+			}
+		}
+
+		// 4. Find the best available move for the current player
+		let bestScore = -Infinity;
+		let bestMove = -1;
+
+		for (let i = 0; i < 9; i++) {
+			if (board[i] === '#') {
+				board[i] = player; // Make temporary move
+				let score = minimax(board, 0, false, -Infinity, Infinity);
+				board[i] = '#'; // Undo move
+
+				if (score > bestScore) {
+					bestScore = score;
+					bestMove = i;
+				}
+			}
+		}
+
+		// 5. Apply the best move to the board and return the new string
+		// add some variability into the game
+		if(boardString==='#########'){
+			bestMove = getRandomIntInclusive(0, 8);
+		}else{
+			
+			if(getRandomIntInclusive(1, 3)==3){
+				let rp = getRandomIntInclusive(0, 8);
+				while(board[rp] !== '#'){
+					rp = getRandomIntInclusive(0, 8);
+				}	
+				board[rp] = player;
+				bestMove = -1;
+
+			}	
+		}
+		
+		if (bestMove !== -1) {
+			board[bestMove] = player;
+		}
+
+		return board.join('');
+	}
+	
 
 	// Initialize the first board draw
 	drawBoard();
 </script>
-<script> // dice 
+<script> // Dice 
     const dicecanvas = document.getElementById('diceCanvas');
     const dicectx = dicecanvas.getContext('2d');
-    const rollButton = document.getElementById('dicerollButton');
+    //const rollButton = document.getElementById('dicerollButton');
 
     // Dice configuration
     const dieSize = 50;
@@ -1317,12 +1576,11 @@ loop();
     }
 
     // Add click event listener to the button
-    rollButton.addEventListener('click', rollDice);
+    //rollButton.addEventListener('click', rollDice);
 
     // Initial roll on page load so the canvas isn't blank
     rollDice();
 </script>
-
 <script> // Easing functions
 
 const Easings = {
@@ -1373,22 +1631,50 @@ function animate({
 }
 
 function closegc(){
-		
 	animate({
-    from: 600,
-    to: 1,
-    duration: 1000,
-    easing: "easeOutCubic",
-    onUpdate: value => {
-        document.getElementById("gameCanvas").style.height = value+"px";
-    },
-    onComplete: () => {
-        console.log("done");
-    }
-});
-
-	
+		from: 600,
+		to: 1,
+		duration: 1000,
+		easing: "easeOutCubic",
+		onUpdate: value => {
+			document.getElementById("game-container").style.height = value+"px";
+		},
+		onComplete: () => {
+			console.log("done");
+		}
+	});
 }
+
+function blinkinmap(){
+	animate({
+		from: 600,
+		to: 1,
+		duration: 1000,
+		easing: "easeOutCubic",
+		onUpdate: value => {
+			document.getElementById("gameCanvas").style.height = value+"px";
+		},
+		onComplete: () => {
+			console.log("done");
+		}
+	});
+}
+
+function dicerollease(){
+	animate({
+		from: 0,
+		to: 15,
+		duration: 500,
+		easing: "easeInCubic",
+		onUpdate: value => {
+			let timeoutID = setTimeout(rollDice, value*200);
+		},
+		onComplete: () => {
+			console.log("done");
+		}
+	});
+}
+
 
 // Example usage
 /*
